@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree Balance Checker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        #treeNetwork {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
+        }
+        .node-input {
+            transition: all 0.2s;
+        }
+        .node-input:focus {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-10">
+                <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
+                    Binary Tree Balance Checker
+                </h1>
+                <p class="text-lg text-gray-600">Visualize and check if your binary tree is height-balanced</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Input Panel -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-500 p-4">
+                        <h2 class="text-xl font-semibold text-white">Tree Configuration</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="mb-6">
+                            <label class="block text-gray-700 font-medium mb-2">Enter nodes in level order:</label>
+                            <p class="text-sm text-gray-500 mb-4">Enter node values (numbers/letters). Use empty field for null nodes.</p>
+                            
+                            <div class="flex flex-wrap gap-3 mb-4" id="inputFields">
+                                <input type="text" class="node-input border border-gray-300 rounded-lg px-4 py-2 w-20 text-center focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Root">
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-2">
+                                <button id="addNode" class="flex items-center gap-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    Add Node
+                                </button>
+                                <button id="removeNode" class="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    Remove Node
+                                </button>
+                                <button id="checkBalance" class="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition pulse-animation">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                    Check Balance
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="result" class="hidden p-4 rounded-lg border">
+                            <h3 class="font-semibold mb-2 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clip-rule="evenodd" />
+                                </svg>
+                                Result
+                            </h3>
+                            <p id="resultText" class="font-medium"></p>
+                            <div id="balanceDetails" class="mt-2 text-sm text-gray-600"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Visualization Panel -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="bg-gradient-to-r from-purple-500 to-indigo-500 p-4">
+                        <h2 class="text-xl font-semibold text-white">Tree Visualization</h2>
+                    </div>
+                    <div class="p-6">
+                        <div id="treeNetwork"></div>
+                        <div class="mt-4 flex justify-center gap-2">
+                            <button id="fitView" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded text-sm">
+                                Fit View
+                            </button>
+                            <button id="centerRoot" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded text-sm">
+                                Center Root
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Examples Section -->
+            <div class="mt-8 bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-amber-500 to-orange-500 p-4">
+                    <h2 class="text-xl font-semibold text-white">Example Trees</h2>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <button class="example-btn bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg p-3 text-left transition" data-example="balanced">
+                            <h3 class="font-medium text-amber-800">Balanced Tree</h3>
+                            <p class="text-sm text-amber-600 mt-1">1, 2, 3, 4, 5, 6, 7</p>
+                        </button>
+                        <button class="example-btn bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg p-3 text-left transition" data-example="unbalanced">
+                            <h3 class="font-medium text-amber-800">Unbalanced Tree</h3>
+                            <p class="text-sm text-amber-600 mt-1">1, 2, 3, 4, null, null, null, 5</p>
+                        </button>
+                        <button class="example-btn bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg p-3 text-left transition" data-example="degenerate">
+                            <h3 class="font-medium text-amber-800">Degenerate Tree</h3>
+                            <p class="text-sm text-amber-600 mt-1">1, 2, null, 3, null, 4</p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            let nodeCount = 1;
+            let network = null;
+            
+            // Initialize network visualization
+            function initNetwork() {
+                const container = document.getElementById('treeNetwork');
+                const data = {
+                    nodes: new vis.DataSet(),
+                    edges: new vis.DataSet()
+                };
+                const options = {
+                    layout: {
+                        hierarchical: {
+                            direction: 'UD',
+                            sortMethod: 'directed',
+                            nodeSpacing: 150,
+                            levelSeparation: 100
+                        }
+                    },
+                    physics: {
+                        hierarchicalRepulsion: {
+                            nodeDistance: 120
+                        }
+                    },
+                    nodes: {
+                        shape: 'box',
+                        margin: 10,
+                        widthConstraint: {
+                            maximum: 60
+                        },
+                        font: {
+                            size: 16,
+                            color: '#fff'
+                        },
+                        color: {
+                            background: '#3B82F6',
+                            border: '#2563EB',
+                            highlight: {
+                                background: '#2563EB',
+                                border: '#1D4ED8'
+                            }
+                        },
+                        borderWidth: 2,
+                        shadow: true
+                    },
+                    edges: {
+                        smooth: true,
+                        arrows: {
+                            to: false
+                        },
+                        color: {
+                            color: '#94A3B8',
+                            highlight: '#64748B'
+                        },
+                        width: 2,
+                        shadow: true
+                    }
+                };
+                
+                network = new vis.Network(container, data, options);
+                
+                // Add event listeners for buttons
+                $('#fitView').click(function() {
+                    network.fit();
+                });
+                
+                $('#centerRoot').click(function() {
+                    const nodeIds = network.body.data.nodes.getIds();
+                    if (nodeIds.length > 0) {
+                        network.focus(nodeIds[0], {
+                            scale: 1.2,
+                            animation: {
+                                duration: 1000,
+                                easingFunction: 'easeInOutQuad'
+                            }
+                        });
+                    }
+                });
+            }
+            
+            initNetwork();
+            
+            // Add node input field
+            $('#addNode').click(function() {
+                nodeCount++;
+                $('#inputFields').append(
+                    `<input type="text" class="node-input border border-gray-300 rounded-lg px-4 py-2 w-20 text-center focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Node ${nodeCount}">`
+                );
+            });
+            
+            // Remove last node input field
+            $('#removeNode').click(function() {
+                if (nodeCount > 1) {
+                    $('.node-input').last().remove();
+                    nodeCount--;
+                }
+            });
+            
+            // Example tree buttons
+            $('.example-btn').click(function() {
+                const example = $(this).data('example');
+                let nodes = [];
+                
+                switch(example) {
+                    case 'balanced':
+                        nodes = ['1', '2', '3', '4', '5', '6', '7'];
+                        break;
+                    case 'unbalanced':
+                        nodes = ['1', '2', '3', '4', '', '', '', '5'];
+                        break;
+                    case 'degenerate':
+                        nodes = ['1', '2', '', '3', '', '4'];
+                        break;
+                }
+                
+                // Clear existing inputs
+                $('.node-input').remove();
+                nodeCount = 0;
+                
+                // Add new inputs
+                nodes.forEach((val, index) => {
+                    nodeCount++;
+                    $('#inputFields').append(
+                        `<input type="text" class="node-input border border-gray-300 rounded-lg px-4 py-2 w-20 text-center focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Node ${index+1}" value="${val}">`
+                    );
+                });
+            });
+            
+            // Check balance
+            $('#checkBalance').click(function() {
+                const nodes = [];
+                $('.node-input').each(function() {
+                    const val = $(this).val().trim();
+                    nodes.push(val === '' ? 'null' : val);
+                });
+                
+                // Simple validation
+                if (nodes.length === 0 || (nodes.length === 1 && nodes[0] === 'null')) {
+                    showResult('Please enter a valid tree', false);
+                    return;
+                }
+                
+                try {
+                    const tree = buildTree(nodes);
+                    const balanceInfo = checkBalanceWithDetails(tree);
+                    
+                    showResult(
+                        `The tree is ${balanceInfo.isBalanced ? '' : 'not '}height-balanced.`,
+                        balanceInfo.isBalanced,
+                        balanceInfo
+                    );
+                    
+                    visualizeTree(tree);
+                } catch (e) {
+                    showResult('Error: ' + e.message, false);
+                }
+            });
+            
+            function showResult(message, isSuccess, balanceInfo = null) {
+                $('#result').removeClass('hidden');
+                $('#resultText').text(message);
+                
+                // Remove all color classes first
+                $('#result').removeClass('border-green-300 bg-green-50 text-green-800')
+                           .removeClass('border-red-300 bg-red-50 text-red-800');
+                
+                // Add appropriate classes
+                if (isSuccess) {
+                    $('#result').addClass('border-green-300 bg-green-50 text-green-800');
+                } else {
+                    $('#result').addClass('border-red-300 bg-red-50 text-red-800');
+                }
+                
+                // Add balance details if available
+                if (balanceInfo) {
+                    let detailsHtml = `
+                        <div class="mt-3 grid grid-cols-2 gap-2">
+                            <div class="text-sm">
+                                <span class="font-medium">Left Height:</span> ${balanceInfo.leftHeight}
+                            </div>
+                            <div class="text-sm">
+                                <span class="font-medium">Right Height:</span> ${balanceInfo.rightHeight}
+                            </div>
+                            <div class="text-sm">
+                                <span class="font-medium">Height Difference:</span> ${Math.abs(balanceInfo.leftHeight - balanceInfo.rightHeight)}
+                            </div>
+                            <div class="text-sm">
+                                <span class="font-medium">Max Allowed Difference:</span> 1
+                            </div>
+                        </div>
+                    `;
+                    $('#balanceDetails').html(detailsHtml);
+                } else {
+                    $('#balanceDetails').empty();
+                }
+            }
+            
+            // Tree building and balance checking functions
+            function buildTree(nodes) {
+                if (nodes.length === 0 || nodes[0] === 'null') return null;
+                
+                const root = { val: nodes[0], left: null, right: null };
+                const queue = [root];
+                let i = 1;
+                
+                while (i < nodes.length && queue.length > 0) {
+                    const current = queue.shift();
+                    
+                    if (i < nodes.length && nodes[i] !== 'null') {
+                        current.left = { val: nodes[i], left: null, right: null };
+                        queue.push(current.left);
+                    }
+                    i++;
+                    
+                    if (i < nodes.length && nodes[i] !== 'null') {
+                        current.right = { val: nodes[i], left: null, right: null };
+                        queue.push(current.right);
+                    }
+                    i++;
+                }
+                
+                return root;
+            }
+            
+            function checkBalanceWithDetails(root) {
+                function height(node) {
+                    if (!node) return 0;
+                    return 1 + Math.max(height(node.left), height(node.right));
+                }
+                
+                function isBalancedHelper(node) {
+                    if (!node) return { isBalanced: true, height: 0 };
+                    
+                    const left = isBalancedHelper(node.left);
+                    const right = isBalancedHelper(node.right);
+                    
+                    const currentHeight = 1 + Math.max(left.height, right.height);
+                    const balanced = left.isBalanced && right.isBalanced && 
+                                   Math.abs(left.height - right.height) <= 1;
+                    
+                    return { isBalanced: balanced, height: currentHeight };
+                }
+                
+                if (!root) return { isBalanced: true, leftHeight: 0, rightHeight: 0 };
+                
+                const leftHeight = height(root.left);
+                const rightHeight = height(root.right);
+                const isBalanced = isBalancedHelper(root).isBalanced;
+                
+                return {
+                    isBalanced,
+                    leftHeight,
+                    rightHeight
+                };
+            }
+            
+            function visualizeTree(root) {
+                if (!root) {
+                    network.body.data.nodes.clear();
+                    network.body.data.edges.clear();
+                    return;
+                }
+                
+                const nodes = [];
+                const edges = [];
+                let id = 1;
+                
+                // BFS to create nodes and edges
+                const queue = [{ node: root, parentId: null, position: 'root' }];
+                
+                while (queue.length > 0) {
+                    const { node, parentId, position } = queue.shift();
+                    const currentNodeId = id++;
+                    
+                    // Determine node color based on balance
+                    const leftHeight = node.left ? height(node.left) : 0;
+                    const rightHeight = node.right ? height(node.right) : 0;
+                    const balanced = Math.abs(leftHeight - rightHeight) <= 1;
+                    
+                    nodes.push({
+                        id: currentNodeId,
+                        label: node.val,
+                        color: {
+                            background: balanced ? '#10B981' : '#EF4444',
+                            border: balanced ? '#059669' : '#DC2626'
+                        }
+                    });
+                    
+                    if (parentId !== null) {
+                        edges.push({
+                            from: parentId,
+                            to: currentNodeId,
+                            label: position === 'left' ? 'L' : 'R',
+                            font: { align: 'top' }
+                        });
+                    }
+                    
+                    if (node.left) {
+                        queue.push({ node: node.left, parentId: currentNodeId, position: 'left' });
+                    }
+                    if (node.right) {
+                        queue.push({ node: node.right, parentId: currentNodeId, position: 'right' });
+                    }
+                }
+                
+                network.body.data.nodes.clear();
+                network.body.data.edges.clear();
+                network.body.data.nodes.add(nodes);
+                network.body.data.edges.add(edges);
+                
+                // Fit the view after a small delay to allow rendering
+                setTimeout(() => {
+                    network.fit({
+                        animation: {
+                            duration: 1000,
+                            easingFunction: 'easeInOutQuad'
+                        }
+                    });
+                }, 50);
+            }
+            
+            // Helper function to calculate height
+            function height(node) {
+                if (!node) return 0;
+                return 1 + Math.max(height(node.left), height(node.right));
+            }
+        });
+    </script>
+</body>
+</html>
